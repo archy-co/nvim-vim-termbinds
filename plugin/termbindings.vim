@@ -100,15 +100,26 @@ tnoremap <silent> <C-w><C-\> <C-\>
 tnoremap <silent> <cmd> <C-w><C-c> <cmd>call jobstop(b:terminal_job_id)<cr>
 
 function! s:RestorePreviousBuffer()
-  if &splitbelow == 0
-    :belowright split #
-  else
-    :aboveleft split #
+  if @% =~? '/usr/bin/zsh'
+    if &splitbelow == 0
+      :belowright split #
+    else
+      :aboveleft split #
+    endif
+  endif
+endfunction
+
+function! s:StartInsert()
+  sleep 1
+  echo @%
+  sleep 1
+  if @% =~? '/usr/bin/zsh'
+    startinsert
   endif
 endfunction
 
 autocmd TermOpen * :call <sid>RestorePreviousBuffer()
-autocmd TermOpen * startinsert
+" autocmd TermOpen * :call <sid>StartInsert()
 
 function! s:SaveNumsSettings()
   if &nu == 1
