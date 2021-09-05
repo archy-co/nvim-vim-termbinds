@@ -14,7 +14,7 @@
 "     :help vim-termbinds
 
 if !has("nvim") || exists("g:loaded_vim_termbinds")
-  finish
+    finish
 endif
 let g:loaded_vim_termbinds = 1
 
@@ -25,22 +25,22 @@ let s:has_nu = 0
 let s:has_rnu = 0
 
 function! s:SetNormalMode()
-  if s:has_nu == 1
-    set nu
-  endif
-  if s:has_rnu == 1
-    set rnu
-  endif
+    if s:has_nu == 1
+        set nu
+    endif
+    if s:has_rnu == 1
+        set rnu
+    endif
 
-  let b:term_mode = s:NORMAL_MODE
+    let b:term_mode = s:NORMAL_MODE
 endfunction
 
 function! s:SetTerminalMode()
-  let b:term_mode = s:TERMINAL_MODE
+    let b:term_mode = s:TERMINAL_MODE
 endfunction
 
 function! s:EnterTerminalMode()
-  call nvim_feedkeys('i', 'inx', v:false)
+    call nvim_feedkeys('i', 'inx', v:false)
 endfunction
 
 " When the user enters normal mode by request, in order to match Vim's
@@ -50,44 +50,44 @@ tnoremap <silent> <C-\><C-n> <C-\><C-n>:<C-u>call <sid>SetNormalMode()<cr>
 tmap <silent> <C-w>N <C-\><C-n>
 
 function! s:TermEnter()
-  if &buftype !=# 'terminal'
-    return
-  endif
+    if &buftype !=# 'terminal'
+        return
+    endif
 
-  let l:term_mode = get(b:, 'term_mode', s:TERMINAL_MODE)
-  if l:term_mode ==# s:TERMINAL_MODE
-    call s:EnterTerminalMode()
-  endif
+    let l:term_mode = get(b:, 'term_mode', s:TERMINAL_MODE)
+    if l:term_mode ==# s:TERMINAL_MODE
+        call s:EnterTerminalMode()
+    endif
 endfunction
 
 augroup vim_termbindings
-  autocmd!
-  " We should run TermEnter() when:
-  " - the user switches buffer (they might switch to a terminal buffer)
-  " - the user switches window (they might switch to a terminal window)
-  " - mouse is released (they might have just clicked on a terminal window)
-  autocmd BufEnter * call s:TermEnter()
-  autocmd WinEnter * call s:TermEnter()
-  autocmd TermOpen * nnoremap <silent><buffer><leftrelease> <leftrelease>:<C-u>call <sid>TermEnter()<cr>
+    autocmd!
+    " We should run TermEnter() when:
+    " - the user switches buffer (they might switch to a terminal buffer)
+    " - the user switches window (they might switch to a terminal window)
+    " - mouse is released (they might have just clicked on a terminal window)
+    autocmd BufEnter * call s:TermEnter()
+    autocmd WinEnter * call s:TermEnter()
+    autocmd TermOpen * nnoremap <silent><buffer><leftrelease> <leftrelease>:<C-u>call <sid>TermEnter()<cr>
 augroup END
 
 function! s:CtrlWHandler()
-  call s:SetTerminalMode()
-  try
-    let l:key_cmd = vim_termbinds#readkeys#ReadKeys()
-  catch /^Vim:Interrupt$/
-    call s:EnterTerminalMode()
-    return
-  endtry
+    call s:SetTerminalMode()
+    try
+        let l:key_cmd = vim_termbinds#readkeys#ReadKeys()
+    catch /^Vim:Interrupt$/
+        call s:EnterTerminalMode()
+        return
+    endtry
 
 
-  let l:winnr_before = win_getid()
-  call nvim_feedkeys("\<C-\>\<C-n>" . l:key_cmd, 'intx', v:false)
-  let l:winnr_after = win_getid()
+    let l:winnr_before = win_getid()
+    call nvim_feedkeys("\<C-\>\<C-n>" . l:key_cmd, 'intx', v:false)
+    let l:winnr_after = win_getid()
 
-  if l:winnr_before == l:winnr_after
-    call s:EnterTerminalMode()
-  endif
+    if l:winnr_before == l:winnr_after
+        call s:EnterTerminalMode()
+    endif
 endfunction
 
 " Handler for CTRL-W bindings (anything that's not Vim-terminal-mode-specific
@@ -99,40 +99,34 @@ tnoremap <silent> <C-w>. <C-w>
 tnoremap <silent> <C-w><C-\> <C-\>
 tnoremap <silent> <cmd> <C-w><C-c> <cmd>call jobstop(b:terminal_job_id)<cr>
 
+function! s:TermInit()
+    call <sid>RestorePreviousBuffer()
+    call <sid>SaveNumsSettings()
+endfunction
+
 function! s:RestorePreviousBuffer()
-  if @% =~? '/usr/bin/zsh'
-    if &splitbelow == 0
-      :belowright split #
-    else
-      :aboveleft split #
+    if @% =~? '/usr/bin/zsh'
+        if &splitbelow == 0
+            :belowright split #
+        else
+            :aboveleft split #
+        endif
+        startinsert
     endif
-  endif
 endfunction
-
-function! s:StartInsert()
-  sleep 1
-  echo @%
-  sleep 1
-  if @% =~? '/usr/bin/zsh'
-    startinsert
-  endif
-endfunction
-
-autocmd TermOpen * :call <sid>RestorePreviousBuffer()
-" autocmd TermOpen * :call <sid>StartInsert()
 
 function! s:SaveNumsSettings()
-  if &nu == 1
-    let s:has_nu = 1
-  endif
-  if &rnu == 1
-    let s:has_rnu = 1
-  endif
+    if &nu == 1
+        let s:has_nu = 1
+    endif
+    if &rnu == 1
+        let s:has_rnu = 1
+    endif
 endfunction
 
 function! s:UnsetNums()
-  set nonu nornu
+    set nonu nornu
 endfunction
 
-autocmd TermOpen * :call <sid>SaveNumsSettings()
+autocmd TermOpen * :call <sid>TermInit()
 autocmd TermEnter * :call <sid>UnsetNums()
